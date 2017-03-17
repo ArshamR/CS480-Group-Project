@@ -1,12 +1,23 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]
+if [ $# -ne 2 ]
 	then
-	echo "Usage: <Path to log file> "
+	echo "Usage: <output file>, <log file> (Don't include path, file must be in same directory) "
 	exit 1;
 fi
 
-rm results.txt
+if [ ! -e $2 ] 
+	then
+	echo "Log file does not exist"
+	exit
+fi
+
+if [ -e $1 ]
+	then
+		rm $1
+fi
+
+results=$1
 declare -a sourceIps
 count=0
 while read p;
@@ -21,14 +32,18 @@ do
 			sourceIps[$count]=$sourceIp
 			count=`expr $count + 1`
 
-
 	elif [ $count -ge 10 ]
 	then 
 		echo "**************DDOS ATTACK DETECTED*******"
-		printf '%s\n' "${sourceIps[@]}" >> results.txt
-		printf '%s\n' "$portPrev" >> results.txt
-		printf '%s\n' "$timePrev" >> results.txt
-		printf '%s\n' "*" >> results.txt
+		echo "Targeted IP: $ipPrev"
+		echo "Targeted Port: $portPrev"
+		echo "Time: $timePrev"
+		echo "Number of hits $count"
+		printf '%s\n' "${sourceIps[@]}" >> $results
+		printf '%s\n' "$portPrev" >> $results
+		printf '%s\n' "$timePrev" >> $results
+		printf '%s\n' "$ipPrev" >> $results
+		printf '%s\n' "*" >> $results
 
 		let count=0
 		sourceIps=()
@@ -37,11 +52,8 @@ do
 		sourceIps=()
 	fi
 
-
 	timePrev=$timeS
 	portPrev=$port
 	ipPrev=$ip
 
-done < ddos.txt
-
-
+done < $2
